@@ -1,0 +1,16 @@
+.env
+.env.local
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+data/*.parquet
+data/*.jsonl
+data/raw/
+data/cache/
+results/*.csv
+results/*.json
+!results/.gitkeep
+.DS_Store
+*.log
