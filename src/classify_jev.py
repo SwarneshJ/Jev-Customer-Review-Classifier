@@ -63,13 +63,17 @@ BASE_QUESTIONS = {
 ITEM_SEP = "::"  # joins a question name to a review_id in packed mode, e.g. "primary::rev_0000042"
 
 # tiktoken's cl100k_base is a stand-in for budgeting, not Jev's actual
-# tokenizer (undocumented) -- close enough to keep packed requests safely
-# under the 32k combined state+question limit.
+# tokenizer (undocumented). A live 23-item batch measured 29,787 real
+# tokens against an estimate under 28,000 -- roughly 6% undercount versus
+# Jev's real usage.input_tokens -- so estimates are scaled up before
+# comparing against --max-batch-tokens, on top of the default's own
+# headroom under the 32k hard limit.
 _ENCODING = tiktoken.get_encoding("cl100k_base")
+_ESTIMATE_SAFETY_MARGIN = 1.10
 
 
 def estimate_tokens(payload: dict) -> int:
-    return len(_ENCODING.encode(json.dumps(payload)))
+    return int(len(_ENCODING.encode(json.dumps(payload))) * _ESTIMATE_SAFETY_MARGIN)
 
 
 def to_wire_question(qdef: dict) -> dict:
