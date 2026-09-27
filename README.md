@@ -1,10 +1,10 @@
 # Review Classification Cascade
 
 Two-tier AI pipeline for e-commerce review classification: Jev (TypeSafe AI's
-"System One" model, called via Vercel AI Gateway) does fast bulk structured
-classification; a confidence/label threshold escalates a subset to Claude,
-which writes the human-facing recommendation (sizing-guide language, PDP
-copy fixes, merchandising notes).
+"System One" model, called directly via TypeSafe's API) does fast bulk
+structured classification; a confidence/label threshold escalates a subset
+to Claude, which writes the human-facing recommendation (sizing-guide
+language, PDP copy fixes, merchandising notes).
 
 Portfolio/demo project — data is real (Amazon Reviews 2023, McAuley Lab,
 UCSD), no simulated model calls except an explicit replay fallback for the
@@ -25,7 +25,7 @@ live demo recording.
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # fill in AI_GATEWAY_API_KEY, ANTHROPIC_API_KEY
+cp .env.example .env   # fill in TYPESAFE_API_KEY, ANTHROPIC_API_KEY
 ```
 
 ## Pilot
@@ -66,7 +66,7 @@ data/                    raw + sampled review parquet files (gitignored)
 src/
   fetch_data.py          HF streaming sample + category join
   labels.py              shared label schema
-  classify_jev.py        Vercel Gateway calls (single + packed-batch)
+  classify_jev.py        TypeSafe API calls (single + packed-batch)
   escalate.py            threshold-based routing
   classify_claude.py     escalated-slice writeup generation
   calibration.py         confidence-vs-accuracy analysis

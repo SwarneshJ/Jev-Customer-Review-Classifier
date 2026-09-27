@@ -1,13 +1,19 @@
 """
-Layer 1: classify reviews with Jev (TypeSafe AI's "System One" model) through
-Vercel AI Gateway's evaluation API.
+Layer 1: classify reviews with Jev (TypeSafe AI's "System One" model) via
+TypeSafe's own direct API (not Vercel AI Gateway -- switched from Gateway
+after the account's only key turned out to need a $10 minimum credit
+top-up; TypeSafe's own console is pay-as-you-go with no purchase floor,
+and our real usage is pennies).
 
-Endpoint contract confirmed against Vercel's docs (2026-09):
-  https://vercel.com/docs/ai-gateway/modalities/evaluation
-  POST https://ai-gateway.vercel.sh/v1/evaluate
-  { "model": "typesafe-ai/jev", "state": <str|obj>, "questions": {name: {type, instructions, criteria}} }
+Endpoint contract confirmed against TypeSafe's docs (2026-09):
+  https://docs.typesafe.ai/introduction/quickstart
+  POST https://api.typesafe.ai/v1/systemone
+  Authorization: Bearer $TYPESAFE_API_KEY
+  { "model": "jev-latest", "state": <str|obj>, "questions": {name: {type, instructions, criteria}} }
   ->
-  { "answers": {name: {type, choice|score|probability, probabilities}}, "usage": {inputTokens, outputTokens} }
+  { "model", "answers": {name: {type, choice|score|noul, confidence?, probabilities?}},
+    "usage": {input_tokens, output_tokens} }
+Get a key at https://console.typesafe.ai/keys (no waitlist).
 
 Two modes:
   --mode single  one review per request (used for the live demo, where a
@@ -45,15 +51,9 @@ from labels import PRIMARY_CRITERIA, PRIMARY_INSTRUCTIONS, SECONDARY_QUESTIONS
 
 load_dotenv()
 
-GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/evaluate"
-MODEL_ID = os.environ.get("JEV_MODEL_ID", "typesafe-ai/jev")
+TYPESAFE_URL = "https://api.typesafe.ai/v1/systemone"
+MODEL_ID = os.environ.get("JEV_MODEL_ID", "jev-latest")
 INPUT_TOKEN_COST_PER_M = 0.042  # output tokens are free (see README)
-
-# TypeSafe's own name for a calibrated true/false probability is "noul";
-# the Gateway's provider-agnostic /v1/evaluate endpoint spells the same
-# question type "boolean". Translate at the wire boundary so labels.py can
-# keep using the vocabulary the project brief and hand-label pass used.
-WIRE_TYPE = {"noul": "boolean", "choice": "choice", "score": "score"}
 
 BASE_QUESTIONS = {
     "primary": {"type": "choice", "instructions": PRIMARY_INSTRUCTIONS, "criteria": PRIMARY_CRITERIA},
@@ -73,8 +73,11 @@ def estimate_tokens(payload: dict) -> int:
 
 
 def to_wire_question(qdef: dict) -> dict:
+    # TypeSafe's native API uses "noul"/"choice"/"score" directly -- no
+    # translation needed (unlike Vercel Gateway's provider-agnostic
+    # /v1/evaluate endpoint, which spells noul "boolean").
     return {
-        "type": WIRE_TYPE[qdef["type"]],
+        "type": qdef["type"],
         "instructions": qdef["instructions"],
         "criteria": qdef["criteria"],
     }
@@ -104,22 +107,27 @@ def build_packed_request(rows: list[dict]) -> dict:
 
 
 def parse_answer(name: str, ans: dict) -> dict:
-    """Flatten one Gateway answer into a few output columns, with a derived
-    scalar confidence (Gateway's /v1/evaluate doesn't return a confidence
-    field directly -- only per-option/per-rung probabilities)."""
+    """Flatten one TypeSafe answer into a few output columns. Choice/score
+    answers carry an explicit `confidence` field on this API (unlike
+    Gateway's /v1/evaluate, which only gave per-option probabilities) --
+    prefer that when present, and fall back to max(probabilities) if a
+    future response omits it. `probabilities`, when present, is stored
+    as JSON for the calibration analysis."""
     out = {}
     if ans["type"] == "choice":
-        probs = ans.get("probabilities", {})
+        probs = ans.get("probabilities")
         out[f"{name}_choice"] = ans.get("choice")
-        out[f"{name}_confidence"] = max(probs.values()) if probs else None
-        out[f"{name}_probabilities"] = json.dumps(probs)
+        out[f"{name}_confidence"] = ans.get("confidence", max(probs.values()) if probs else None)
+        if probs:
+            out[f"{name}_probabilities"] = json.dumps(probs)
     elif ans["type"] == "score":
-        probs = ans.get("probabilities", {})
+        probs = ans.get("probabilities")
         out[f"{name}_score"] = ans.get("score")
-        out[f"{name}_confidence"] = max(probs.values()) if probs else None
-        out[f"{name}_probabilities"] = json.dumps(probs)
-    elif ans["type"] == "boolean":
-        p = ans.get("probability")
+        out[f"{name}_confidence"] = ans.get("confidence", max(probs.values()) if probs else None)
+        if probs:
+            out[f"{name}_probabilities"] = json.dumps(probs)
+    elif ans["type"] == "noul":
+        p = ans.get("noul")
         out[f"{name}_probability"] = p
         out[f"{name}_confidence"] = max(p, 1 - p) if p is not None else None
     return out
@@ -127,9 +135,10 @@ def parse_answer(name: str, ans: dict) -> dict:
 
 class JevClient:
     def __init__(self, max_retries: int = 5):
-        api_key = os.environ.get("AI_GATEWAY_API_KEY")
+        api_key = os.environ.get("TYPESAFE_API_KEY")
         if not api_key:
-            raise RuntimeError("AI_GATEWAY_API_KEY not set -- copy .env.example to .env and fill it in")
+            raise RuntimeError("TYPESAFE_API_KEY not set -- get a key at https://console.typesafe.ai/keys "
+                               "and add it to .env")
         self.client = httpx.Client(
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             timeout=30,
@@ -140,7 +149,7 @@ class JevClient:
     def call(self, payload: dict, batch_id: int, n_items: int) -> dict:
         for attempt in range(self.max_retries):
             t0 = time.time()
-            resp = self.client.post(GATEWAY_URL, json=payload)
+            resp = self.client.post(TYPESAFE_URL, json=payload)
             latency_ms = (time.time() - t0) * 1000
             if resp.status_code == 429:
                 retry_after = float(resp.headers.get("retry-after", 2 ** attempt))
@@ -155,8 +164,8 @@ class JevClient:
             resp.raise_for_status()
             body = resp.json()
             usage = body.get("usage", {})
-            input_tokens = usage.get("inputTokens", 0)
-            output_tokens = usage.get("outputTokens", 0)
+            input_tokens = usage.get("input_tokens", 0)
+            output_tokens = usage.get("output_tokens", 0)
             self.usage_log.append({
                 "batch_id": batch_id,
                 "n_items": n_items,
