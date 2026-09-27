@@ -24,14 +24,14 @@
 
   const MAX_CARDS = 40;
 
-  const DEMO_MODE_CAP = 20;
+  // The only two run sizes this page offers. Demo mode picks between
+  // them -- there is no separate "mode" concept in the UI: the button
+  // always triggers a real, live Jev classification, just capped to a
+  // small count when demo mode is on.
+  const DEMO_RUN_N = 20;
+  const FULL_RUN_N = 12000;
 
   const params = new URLSearchParams(window.location.search);
-  // Defaults to "replay" and a small n deliberately: this page must never
-  // spend real money against the paid Jev API just from being opened.
-  // A real live run requires explicitly passing ?mode=live in the URL.
-  const mode = params.get("mode") || "replay";
-  const requestedN = Number(params.get("n")) || 200;
   const revealDelayMs = params.get("reveal_delay_ms") || "120";
   const maxBatchTokens = params.get("max_batch_tokens") || "28000";
 
@@ -48,7 +48,6 @@
     feed: document.getElementById("feed"),
     bars: document.getElementById("bars"),
     startBar: document.getElementById("startBar"),
-    startIcon: document.getElementById("startIcon"),
     startTitle: document.getElementById("startTitle"),
     startDesc: document.getElementById("startDesc"),
     startBtn: document.getElementById("startBtn"),
@@ -135,7 +134,6 @@
 
     const card = document.createElement("div");
     card.className = "card";
-    card.style.setProperty("--card-accent", `var(--series-${review.primary_choice})`);
 
     const confidencePct = review.primary_confidence != null
       ? `${Math.round(review.primary_confidence * 100)}%`
@@ -179,7 +177,10 @@
     // The demo flag is sent alongside n, not just the pre-capped number --
     // the server enforces the same cap independently, so this isn't the
     // only thing standing between a stray request and a full-size run.
-    const url = `/api/stream?mode=${encodeURIComponent(mode)}&n=${encodeURIComponent(effectiveN)}`
+    // mode is always "live" here: this button never does anything but a
+    // real classification run (replay still exists server-side as a
+    // manual fallback -- see server/app.py -- it's just not offered here).
+    const url = `/api/stream?mode=live&n=${encodeURIComponent(effectiveN)}`
       + `&demo=${demoMode ? "1" : "0"}`
       + `&reveal_delay_ms=${encodeURIComponent(revealDelayMs)}&max_batch_tokens=${encodeURIComponent(maxBatchTokens)}`;
     const source = new EventSource(url);
@@ -192,7 +193,7 @@
       estCostPerItem = data.est_cost_per_item || 0;
       el.statTotal.textContent = total.toLocaleString();
       initBars();
-      setStatus("live", mode === "replay" ? "Replaying" : "Live");
+      setStatus("live", "Live");
       startElapsedClock();
     });
 
@@ -234,7 +235,7 @@
   }
 
   function effectiveN() {
-    return isDemoMode() ? Math.min(requestedN, DEMO_MODE_CAP) : requestedN;
+    return isDemoMode() ? DEMO_RUN_N : FULL_RUN_N;
   }
 
   function loadDemoModePref() {
@@ -253,24 +254,12 @@
 
   function renderStartGate() {
     const n = effectiveN();
-    el.startIcon.textContent = mode === "live" ? "⚠" : "▶";
-    if (mode === "live") {
-      el.startTitle.textContent = "Start live classification";
-      el.startDesc.innerHTML = `This calls the real Jev API for <strong>${n.toLocaleString()}</strong> `
-        + `reviews and <span class="cost-warn">spends real API credit</span> the moment you click. `
-        + (isDemoMode() ? `Demo mode is on, so it stops after ${DEMO_MODE_CAP}. ` : "")
-        + `Nothing happens before that.`;
-      el.startBtn.textContent = `⚠ Start live run (${n.toLocaleString()} reviews, real cost)`;
-      el.startBtn.className = "start-btn ready-live";
-    } else {
-      el.startTitle.textContent = "Start replay";
-      el.startDesc.innerHTML = `Replays a previously classified sample from disk. `
-        + `<span class="cost-free">No API calls, no cost.</span> `
-        + (isDemoMode() ? `Demo mode is on, so it stops after ${DEMO_MODE_CAP}. ` : "")
-        + `Nothing happens before you click.`;
-      el.startBtn.textContent = `▶ Start replay (${n.toLocaleString()} reviews, free)`;
-      el.startBtn.className = "start-btn ready-replay";
-    }
+    el.startTitle.textContent = "Start classification";
+    el.startDesc.innerHTML = `Calls the real Jev API for <strong>${n.toLocaleString()}</strong> reviews `
+      + `and <span class="cost-warn">spends real API credit</span> the moment you click. `
+      + `Nothing happens before that.`;
+    el.startBtn.textContent = `Start — ${n.toLocaleString()} reviews`;
+    el.startBtn.className = "start-btn ready-live";
   }
 
   function setUpStartGate() {

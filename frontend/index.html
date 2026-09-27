@@ -11,10 +11,14 @@
 
     <header class="topbar">
       <div class="brand">
-        <div class="brand-mark">J</div>
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 2 L4 13.5 H10.5 L9.5 22 L20 9.5 H13.5 L13 2 Z" fill="currentColor"/>
+          </svg>
+        </div>
         <div class="brand-text">
           <h1>Review Classification Cascade</h1>
-          <p>Live Jev classification &middot; TypeSafe AI System One model</p>
+          <p>Live classification &middot; Jev, TypeSafe AI&rsquo;s System One model</p>
         </div>
       </div>
       <div class="topbar-right">
@@ -40,7 +44,11 @@
          loaded or reloaded. -->
     <section class="start-bar" id="startBar">
       <div class="start-bar-text">
-        <span class="start-bar-icon" id="startIcon">&#9654;</span>
+        <span class="start-bar-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13 2 L4 13.5 H10.5 L9.5 22 L20 9.5 H13.5 L13 2 Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+        </span>
         <div>
           <div class="start-bar-title" id="startTitle">Start classifying</div>
           <div class="start-bar-desc" id="startDesc">Loading run details&hellip;</div>
@@ -51,23 +59,35 @@
 
     <section class="stats">
       <div class="stat-tile stat-hero">
+        <div class="stat-tile-head">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12.5L9 17.5L20 6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="stat-label">Reviews classified</span>
+        </div>
         <div class="stat-value">
           <span id="statCount">0</span><span class="stat-sep">/</span><span id="statTotal">&mdash;</span>
         </div>
-        <div class="stat-label">Reviews classified</div>
         <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
       </div>
       <div class="stat-tile">
+        <div class="stat-tile-head">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17L9 10L13.5 14L21 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 5H21V11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="stat-label">Reviews / min</span>
+        </div>
         <div class="stat-value" id="statRate">&mdash;</div>
-        <div class="stat-label">Reviews / min</div>
       </div>
       <div class="stat-tile">
+        <div class="stat-tile-head">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12L15 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="stat-label">Elapsed</span>
+        </div>
         <div class="stat-value" id="statElapsed">0:00</div>
-        <div class="stat-label">Elapsed</div>
       </div>
       <div class="stat-tile">
+        <div class="stat-tile-head">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4.5V19.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16.5 8C16.5 6.6 14.9 5.5 12.9 5.5C10.7 5.5 9 6.7 9 8.4C9 12 16 10.3 16 13.8C16 15.5 14.3 16.7 12 16.7C9.9 16.7 8.3 15.6 8.3 14.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span class="stat-label">Est. Jev cost</span>
+        </div>
         <div class="stat-value" id="statCost">$0.00</div>
-        <div class="stat-label">Est. Jev cost</div>
       </div>
     </section>
 
