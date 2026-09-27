@@ -47,7 +47,7 @@
     progressFill: document.getElementById("progressFill"),
     feed: document.getElementById("feed"),
     bars: document.getElementById("bars"),
-    startGate: document.getElementById("startGate"),
+    startBar: document.getElementById("startBar"),
     startIcon: document.getElementById("startIcon"),
     startTitle: document.getElementById("startTitle"),
     startDesc: document.getElementById("startDesc"),
@@ -289,7 +289,7 @@
       el.startBtn.disabled = true;
       el.demoToggleInput.disabled = true;
       el.startBtn.textContent = "Starting…";
-      el.startGate.classList.add("hidden");
+      el.startBar.classList.add("hidden");
       el.feed.innerHTML = '<div class="feed-empty">Waiting for the first classification&hellip;</div>';
       connect(n, demoMode);
     }, { once: true });

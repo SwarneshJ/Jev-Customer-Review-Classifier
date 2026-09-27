@@ -32,6 +32,23 @@
       </div>
     </header>
 
+    <!-- Nothing here connects to anything on its own. No SSE connection is
+         opened, and no API call is made, until this button is clicked --
+         see app.js, which only calls connect() from the click handler.
+         This is deliberate: the underlying classification is a paid API
+         call, and this page must never spend money just from being
+         loaded or reloaded. -->
+    <section class="start-bar" id="startBar">
+      <div class="start-bar-text">
+        <span class="start-bar-icon" id="startIcon">&#9654;</span>
+        <div>
+          <div class="start-bar-title" id="startTitle">Start classifying</div>
+          <div class="start-bar-desc" id="startDesc">Loading run details&hellip;</div>
+        </div>
+      </div>
+      <button class="start-btn" id="startBtn" disabled>Loading&hellip;</button>
+    </section>
+
     <section class="stats">
       <div class="stat-tile stat-hero">
         <div class="stat-value">
@@ -72,21 +89,6 @@
 
     </main>
 
-  </div>
-
-  <!-- Nothing above connects to anything on its own. No SSE connection is
-       opened, and no API call is made, until this gate's button is
-       clicked -- see app.js, which only calls connect() from the click
-       handler. This is deliberate: the underlying classification is a
-       paid API call, and this page must never spend money just from
-       being loaded or reloaded. -->
-  <div class="start-gate" id="startGate">
-    <div class="start-card">
-      <div class="start-icon" id="startIcon">&#9654;</div>
-      <h2 id="startTitle">Start classifying</h2>
-      <p id="startDesc">Loading run details&hellip;</p>
-      <button class="start-btn" id="startBtn" disabled>Loading&hellip;</button>
-    </div>
   </div>
 
   <script src="app.js"></script>
