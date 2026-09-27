@@ -17,9 +17,18 @@
           <p>Live Jev classification &middot; TypeSafe AI System One model</p>
         </div>
       </div>
-      <div class="status" id="status">
-        <span class="status-dot" id="statusDot"></span>
-        <span id="statusLabel">Connecting&hellip;</span>
+      <div class="topbar-right">
+        <label class="demo-toggle" id="demoToggle" for="demoToggleInput" title="Caps the run at 20 reviews, then stops">
+          <span class="demo-toggle-label">Demo mode</span>
+          <span class="demo-toggle-switch">
+            <input type="checkbox" id="demoToggleInput">
+            <span class="demo-toggle-track"><span class="demo-toggle-thumb"></span></span>
+          </span>
+        </label>
+        <div class="status" id="status">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusLabel">Connecting&hellip;</span>
+        </div>
       </div>
     </header>
 

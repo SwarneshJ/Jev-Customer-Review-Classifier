@@ -154,12 +154,20 @@ async def event_stream(mode: str, n: int, reveal_delay_ms: int, max_batch_tokens
             pass
 
 
+DEMO_MODE_CAP = 20
+
+
 @app.get("/api/stream")
 async def stream(request: Request):
     mode = request.query_params.get("mode", "live")
     if mode not in ("live", "replay"):
         mode = "live"
     n = int(request.query_params.get("n", 12000))
+    # Enforced here too, not just in the frontend's button label/state --
+    # a demo=1 request is capped server-side regardless of what n it asks
+    # for, so a stale tab or a hand-edited URL can't bypass the cap.
+    if request.query_params.get("demo") == "1":
+        n = min(n, DEMO_MODE_CAP)
     reveal_delay_ms = int(request.query_params.get("reveal_delay_ms", 120))
     max_batch_tokens = int(request.query_params.get("max_batch_tokens", 28000))
 

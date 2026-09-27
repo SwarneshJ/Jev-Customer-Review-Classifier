@@ -99,6 +99,85 @@ body {
   color: var(--text-muted);
 }
 
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.demo-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  user-select: none;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-1);
+  transition: border-color 0.2s ease;
+}
+
+.demo-toggle-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.demo-toggle-switch {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.demo-toggle-switch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.demo-toggle-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--gridline);
+  border: 1px solid var(--border-strong);
+  transition: background 0.2s ease;
+}
+
+.demo-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+}
+
+.demo-toggle-switch input:checked ~ .demo-toggle-track {
+  background: color-mix(in srgb, var(--success) 35%, var(--gridline));
+  border-color: color-mix(in srgb, var(--success) 55%, var(--border-strong));
+}
+
+.demo-toggle-switch input:checked ~ .demo-toggle-track .demo-toggle-thumb {
+  transform: translateX(14px);
+  background: var(--success);
+}
+
+.demo-toggle:has(input:checked) {
+  border-color: color-mix(in srgb, var(--success) 45%, var(--border));
+}
+
+.demo-toggle:has(input:checked) .demo-toggle-label {
+  color: var(--text-primary);
+}
+
 .status {
   display: flex;
   align-items: center;
