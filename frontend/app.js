@@ -52,6 +52,8 @@
     startDesc: document.getElementById("startDesc"),
     startBtn: document.getElementById("startBtn"),
     demoToggleInput: document.getElementById("demoToggleInput"),
+    resultsBody: document.getElementById("resultsBody"),
+    tableCount: document.getElementById("tableCount"),
   };
 
   let total = 0;
@@ -59,6 +61,14 @@
   let labelCounts = {};
   let startTime = null;
   let elapsedTimer = null;
+
+  // Holds every classified review for the full results table (the animated
+  // feed above only keeps the most recent MAX_CARDS). Sorted in place and
+  // fully re-rendered only when a header is clicked -- appending as results
+  // arrive is O(1) per row, so the live stream stays cheap regardless.
+  const allResults = [];
+  let sortKey = null;
+  let sortDir = 1;
 
   function setStatus(kind, text) {
     el.statusWrap.className = kind;
@@ -129,15 +139,15 @@
     return "";
   }
 
+  function confidencePct(review) {
+    return review.primary_confidence != null ? `${Math.round(review.primary_confidence * 100)}%` : "—";
+  }
+
   function addCard(review) {
     if (el.feed.querySelector(".feed-empty")) el.feed.innerHTML = "";
 
     const card = document.createElement("div");
     card.className = "card";
-
-    const confidencePct = review.primary_confidence != null
-      ? `${Math.round(review.primary_confidence * 100)}%`
-      : "—";
 
     card.innerHTML = `
       <div class="card-top">
@@ -150,7 +160,7 @@
         <span class="pill" style="--pill-color:var(--series-${review.primary_choice})">
           <span class="pill-dot"></span>${LABEL_TITLES[review.primary_choice] || review.primary_choice}
         </span>
-        <span class="confidence">${confidencePct} confidence</span>
+        <span class="confidence">${confidencePct(review)} confidence</span>
         ${detailTag(review)}
       </div>`;
 
@@ -164,6 +174,73 @@
     const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  function rowHtml(review, idx) {
+    return `
+      <td class="col-idx">${idx + 1}</td>
+      <td><span class="stars">${starString(review.rating)}</span></td>
+      <td><span class="cell-text" title="${escapeHtml(review.text || "")}">${escapeHtml(review.text || "")}</span></td>
+      <td>
+        <span class="pill" style="--pill-color:var(--series-${review.primary_choice})">
+          <span class="pill-dot"></span>${LABEL_TITLES[review.primary_choice] || review.primary_choice}
+        </span>
+      </td>
+      <td><span class="confidence">${confidencePct(review)}</span></td>
+      <td>${detailTag(review) || "&mdash;"}</td>`;
+  }
+
+  function addResultRow(review) {
+    if (el.resultsBody.querySelector(".table-empty-row")) el.resultsBody.innerHTML = "";
+    allResults.push(review);
+
+    // Only append (cheap) when the table is showing arrival order -- if the
+    // viewer has sorted by a column, a full re-render keeps new rows in the
+    // right place instead of always tacking them onto the end.
+    if (sortKey === null) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = rowHtml(review, allResults.length - 1);
+      el.resultsBody.appendChild(tr);
+    } else {
+      renderTable();
+    }
+    el.tableCount.textContent = `${allResults.length.toLocaleString()} row${allResults.length === 1 ? "" : "s"}`;
+  }
+
+  function renderTable() {
+    const rows = allResults.slice();
+    if (sortKey) {
+      rows.sort((a, b) => {
+        const av = a[sortKey];
+        const bv = b[sortKey];
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        if (typeof av === "string") return av.localeCompare(bv) * sortDir;
+        return (av - bv) * sortDir;
+      });
+    }
+    el.resultsBody.innerHTML = rows.map((r, i) => `<tr>${rowHtml(r, i)}</tr>`).join("");
+  }
+
+  function setUpTableSorting() {
+    document.querySelectorAll(".results-table th.sortable").forEach((th) => {
+      th.innerHTML = `${th.textContent}<span class="sort-arrow">↕</span>`;
+      th.addEventListener("click", () => {
+        const key = th.dataset.sort;
+        if (sortKey === key) {
+          sortDir *= -1;
+        } else {
+          sortKey = key;
+          sortDir = 1;
+        }
+        document.querySelectorAll(".results-table th.sortable").forEach((other) => {
+          other.classList.toggle("sort-active", other === th);
+          other.querySelector(".sort-arrow").textContent = other !== th ? "↕" : sortDir === 1 ? "↑" : "↓";
+        });
+        renderTable();
+      });
+    });
   }
 
   function startElapsedClock() {
@@ -200,6 +277,7 @@
     source.addEventListener("review", (e) => {
       const review = JSON.parse(e.data);
       addCard(review);
+      addResultRow(review);
       labelCounts[review.primary_choice] = (labelCounts[review.primary_choice] || 0) + 1;
       updateBars();
 
@@ -287,4 +365,5 @@
   // Nothing above this line opens a connection or calls any API --
   // connect() only runs from the button's click handler above.
   setUpStartGate();
+  setUpTableSorting();
 })();

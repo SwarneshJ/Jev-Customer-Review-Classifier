@@ -109,6 +109,30 @@
 
     </main>
 
+    <section class="panel table-panel">
+      <div class="panel-head">
+        <h2>All results</h2>
+        <span class="table-count" id="tableCount">0 rows</span>
+      </div>
+      <div class="table-wrap">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th class="col-idx">#</th>
+              <th class="sortable" data-sort="rating">Rating</th>
+              <th>Review</th>
+              <th class="sortable" data-sort="primary_choice">Label</th>
+              <th class="sortable" data-sort="primary_confidence">Confidence</th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <tr class="table-empty-row"><td colspan="6">No results yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
   </div>
 
   <script src="app.js"></script>

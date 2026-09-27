@@ -636,6 +636,138 @@ body {
   transition: width 0.5s var(--ease);
 }
 
+/* ---------- results table ----------
+   Holds every classified review, not just the animated feed's most recent
+   40 -- appended as results arrive (cheap), full sort-and-rebuild only on
+   an explicit header click (rare, so an O(n log n) rebuild is fine even
+   at a few thousand rows). */
+
+.table-panel {
+  margin-top: 16px;
+}
+
+.table-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.table-wrap {
+  max-height: 520px;
+  overflow: auto;
+  border-radius: var(--radius-sm);
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.results-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-2);
+  text-align: left;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 10px 14px;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 var(--border-strong);
+}
+
+.results-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.results-table th.sortable:hover {
+  color: var(--text-secondary);
+}
+
+.results-table th.sortable .sort-arrow {
+  margin-left: 4px;
+  opacity: 0.5;
+}
+
+.results-table th.sort-active {
+  color: var(--text-primary);
+}
+
+.results-table th.sort-active .sort-arrow {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.results-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+
+.results-table tbody tr {
+  animation: row-in 0.3s var(--ease);
+  transition: background 0.12s ease;
+}
+
+@keyframes row-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.results-table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.results-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.col-idx {
+  width: 40px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.results-table .stars {
+  font-size: 10px;
+}
+
+.results-table .cell-text {
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.results-table .confidence {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.results-table .detail-tag {
+  padding-left: 0;
+}
+
+.results-table .detail-tag::before {
+  display: none;
+}
+
+.table-empty-row td {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 28px 0;
+}
+
+.table-wrap::-webkit-scrollbar { width: 6px; height: 6px; }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
 /* ---------- scrollbar, subtle ---------- */
 
 .feed::-webkit-scrollbar { width: 6px; }
@@ -649,4 +781,5 @@ body {
   .layout { grid-template-columns: 1fr; }
   .start-bar { flex-direction: column; align-items: stretch; }
   .start-btn { width: 100%; }
+  .results-table .cell-text { max-width: 220px; }
 }
